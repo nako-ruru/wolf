@@ -1,0 +1,5 @@
+intranetAddresses=localhost:8080
+internetAddresses=127.0.0.1
+
+#intranetAddresses=115.28.172.156:8080
+#internetAddresses=127.0.0.1

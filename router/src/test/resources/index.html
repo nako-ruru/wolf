@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>Simple Web Socket Client</title>
+	<link rel="stylesheet" type="text/css" href="css/reset.css"/>
+	<link rel="stylesheet" type="text/css" href="css/style.css"/>
+</head>
+<body>
+<div id="content">
+	<fieldset>
+		<legend>Server Location</legend>
+		<div>
+			<label>URL:</label>
+			<input type="text" id="serverUrl" value="ws://localhost:8080/websocket/message"/>
+			<button id="connectButton">Open</button>
+			<button id="disconnectButton">Close</button>
+		</div>
+		<div>
+			<label>Status:</label>
+			<span id="connectionStatus">CLOSED</span>
+		</div>
+	</fieldset>
+	<fieldset id="requestArea">
+		<legend>Request</legend>
+		<div>
+            <textarea id="sendMessage" disabled="disabled">{action: "subscribe", securityIds:["a1601","a1603","a1605","a1607","a1609","a1611","a1701","a1703","a1705","b1601","b1603","b1605","b1607","b1609","b1611","bb1601","bb1602","bb1603","bb1604","bb1605","bb1606","bb1607","bb1608","bb1609","bb1610","bb1611","bb1612","c1601","c1603","c1605","c1607","c1609","c1611","cs1601","cs1603","cs1605","cs1607","cs1609","cs1611","fb1601","fb1602","fb1603","fb1604","fb1605","fb1606","fb1607","fb1608","fb1609","fb1610","fb1611","fb1612","i1601","i1602","i1603","i1604","i1605","i1606","i1607","i1608","i1609","i1610","i1611","i1612","j1601","j1602","j1603","j1604","j1605","j1606","j1607","j1608","j1609","j1610","j1611","j1612","jd1601","jd1602","jd1603","jd1604","jd1605","jd1606","jd1609","jd1610","jd1611","jd1612","jm1601","jm1602","jm1603","jm1604","jm1605","jm1606","jm1607","jm1608","jm1609","jm1610","jm1611","jm1612","l1601","l1602","l1603","l1604","l1605","l1606","l1607","l1608","l1609","l1610","l1611","l1612","m1601","m1603","m1605","m1607","m1608","m1609","m1611","m1612","p1601","p1602","p1603","p1604","p1605","p1606","p1607","p1608","p1609","p1610","p1611","p1612","pp1601","pp1602","pp1603","pp1604","pp1605","pp1606","pp1607","pp1608","pp1609","pp1610","pp1611","pp1612","v1601","v1602","v1603","v1604","v1605","v1606","v1607","v1608","v1609","v1610","v1611","v1612","y1601","y1603","y1605","y1607","y1608","y1609","y1611","y1612"]}</textarea>
+		</div>
+		<div>
+			<button id="sendButton" disabled="disabled">Send</button>
+			[Shortcut] Ctr + Enter
+		</div>
+	</fieldset>
+	<fieldset id="messageArea">
+		<legend>Message Log <button id="clearMessage">Clear</button></legend>
+		<div id="messages"></div>
+	</fieldset>
+</div>
+<script type="text/javascript" src="lib/jquery-1.4.3.min.js"></script>
+<script type="text/javascript" src="index.js"></script>
+</body>
+</html>
