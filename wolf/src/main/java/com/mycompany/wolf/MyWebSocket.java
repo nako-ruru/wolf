@@ -73,15 +73,22 @@ public class MyWebSocket {
             case "wolfVote":
                 new WolfVote(session, m.getProperties().get("playerId")).invoke();
                 break;
-            case "witchHelp":
+            case "witchSave":
+                new WitchSave(session, m.getProperties().get("playerId")).invoke();
                 break;
             case "witchPoison":
+                new WitchPoison(session, m.getProperties().get("playerId")).invoke();
                 break;
             case "hunterKill":
+                new HunterKill(session, m.getProperties().get("playerId")).invoke();
                 break;
             case "seerForecast":
+                new SeerForecast(session, m.getProperties().get("playerId")).invoke();
                 break;
-                
+            case "enableMicrophone":
+                break;
+            case "playerVote":
+                break;
         }
     }
      
