@@ -62,7 +62,7 @@ public class Room {
     
     private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     
-    public final String roomId = UUID.randomUUID().toString();
+    public String roomId = UUID.randomUUID().toString();
     
     private final List<Session> sessions = new LinkedList<>();
     

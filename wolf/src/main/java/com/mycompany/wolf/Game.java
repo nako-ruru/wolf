@@ -65,7 +65,9 @@ public class Game {
     public void enter(Session session, String roomId) {
         Room room = rooms.get(roomId);
         if(room == null) {
-            rooms.putIfAbsent(roomId, room);
+            Room newRoom = new Room();
+            newRoom.roomId = roomId;
+            rooms.putIfAbsent(roomId, newRoom);
             room = rooms.get(roomId);
         }
         room.addPlayer(session);

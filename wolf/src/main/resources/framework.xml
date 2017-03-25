@@ -21,6 +21,4 @@
     <mvc:annotation-driven />
     <mvc:default-servlet-handler/>
     
-    <bean id="routerAddress" class="java.lang.String">127.0.0.1:8080</bean>
-    
 </beans>
