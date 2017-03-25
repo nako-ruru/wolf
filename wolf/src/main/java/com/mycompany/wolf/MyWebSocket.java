@@ -65,7 +65,7 @@ public class MyWebSocket {
                 new Exit(session).invoke();
                 break;
             case "prepare":
-                new Prepare().invoke();
+                new Prepare(session).invoke();
                 break;
             case "competeRole":
                 new CompeteRole(session, m.getProperties().get("role")).invoke();

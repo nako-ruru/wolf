@@ -104,4 +104,74 @@ public class Game {
         }
     }
     
+    public void wolfVote(Session session, String votedPlayerId) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.wolfVote(session, votedPlayerId);
+                });
+    }
+
+    public void witchSave(Session session, String savedPlayerId) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.witchSave(session, savedPlayerId);
+                });
+    }
+    
+    public void witchPoison(Session session, String poisonedPlayerId) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.witchPoison(session, poisonedPlayerId);
+                });
+    }
+    
+    public void hunterKill(Session session, String killedPlayerId) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.hunterKills(session, killedPlayerId);
+                });
+    }
+    
+    public void seerForcast(Session session, String forcastedPlayerId) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.seerForecasts(session, forcastedPlayerId);
+                });
+    }
+    
+    public void enableMicrohpone(Session session, boolean flag) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.enableMicrophone(session, flag);
+                });
+    }
+    
+    public void playerVote(Session session, String votedPlayerId) {
+        String playerId = (String) session.getUserProperties().get("playerId");
+        rooms.values().stream()
+                .filter(r -> r.contains(playerId))
+                .findAny()
+                .ifPresent(room -> {
+                    room.playerVote(session, votedPlayerId);
+                });
+    }
+    
 }

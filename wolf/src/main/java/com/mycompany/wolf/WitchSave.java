@@ -12,18 +12,18 @@ import javax.websocket.Session;
  *
  * @author Administrator
  */
-public class WolfVote {
+public class WitchSave {
     
     private final Session session;
     private final String playerId;
 
-    public WolfVote(Session session, String playerId) {
+    public WitchSave(Session session, String playerId) {
         this.session = session;
         this.playerId = playerId;
     }
     
     public void invoke() {
-        SpringContext.getBean(Game.class).wolfVote(session, playerId);
+        SpringContext.getBean(Game.class).witchSave(session, playerId);
     }
     
 }

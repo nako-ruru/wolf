@@ -5,14 +5,23 @@
  */
 package com.mycompany.wolf;
 
+import com.mycompany.work.framework.spring.SpringContext;
+import javax.websocket.Session;
+
 /**
  *
  * @author Administrator
  */
 public class Prepare {
     
+    private final Session session;
+    
+    public Prepare(Session session) {
+        this.session = session;
+    }
+    
     public void invoke() {
-        
+        SpringContext.getBean(Game.class).prepare(session);
     }
     
 }

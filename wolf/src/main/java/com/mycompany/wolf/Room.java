@@ -70,6 +70,7 @@ public class Room {
     private final Map<String, WitchPoisoning> witchPoisonings = new LinkedHashMap<>();
     private final Map<String, HunterKilling> hunterKillings = new LinkedHashMap<>();
     private final Map<String, SeerForcasting> seerForcastings = new LinkedHashMap<>();
+    private final Map<String, PlayerVoting> playerVotings = new LinkedHashMap<>();
     
     private final Set<String> dead = new HashSet();
     
@@ -278,7 +279,7 @@ public class Room {
         }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
     }
     
-    public void wolvesVote(Session session, String playerId) {
+    public void wolfVote(Session session, String playerId) {
         if("wolf".equals(session.getUserProperties().get("role"))) {
             wolfVotings.put(getPlayerId(session), new WolfVoting(playerId));
         }
@@ -385,15 +386,15 @@ public class Room {
     }
     
     private void notifyDead() {
-        Collection<String> dead = new LinkedHashSet<>();
+        Collection<String> newlyDead = new LinkedHashSet<>();
         
         witchPoisonings.values().stream()
                 .map(witchPoisoning -> witchPoisoning.playerId)
-                .peek(dead::add)
+                .peek(newlyDead::add)
                 .forEach(this.dead::add);
         hunterKillings.values().stream()
                 .map(hunterKilling -> hunterKilling.playerId)
-                .peek(dead::add)
+                .peek(newlyDead::add)
                 .forEach(this.dead::add);
         
         List<Map.Entry<String, Long>> top2 = wolfVotings.values().stream()
@@ -403,7 +404,7 @@ public class Room {
                 .limit(2)
                 .collect(Collectors.toList());
         if(top2.size() == 1 || (top2.size() == 2 && top2.get(0).getValue().compareTo(top2.get(1).getValue()) > 0)) {
-            dead.add(top2.get(0).getKey());
+            newlyDead.add(top2.get(0).getKey());
             this.dead.add(top2.get(0).getKey());
             firstTurn = IntStream.range(0, sessions.size())
                     .filter(i -> Objects.equals(top2.get(0).getKey(), getPlayerId(sessions.get(i))))
@@ -417,7 +418,7 @@ public class Room {
         
         Map<String, Object> notifyDead = ImmutableMap.of(
                 "code", "notifyDead",
-                "properties", dead
+                "properties", newlyDead
         );
         String jsonText = JsonUtils.toString(notifyDead);
         sessions.stream()
@@ -443,6 +444,8 @@ public class Room {
             turnOffset++;
             if(turnOffset < sessions.size()) {
                 nextPlayer();
+            } else {
+                notifySomeoneBeVoted();
             }
         }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
     }
@@ -457,6 +460,51 @@ public class Room {
             sessions.stream()
                     .forEach(s -> s.getAsyncRemote().sendText(jsonText));
         }
+    }
+    
+    private void notifyPlayersVote() {
+        playerVotings.clear();
+        
+        Map<String, Object> assignRoles = ImmutableMap.of(
+                "code", "notifyPlayersVote"
+        );
+        String jsonText = JsonUtils.toString(assignRoles);
+        sessions.stream()
+                .forEach(s -> s.getAsyncRemote().sendText(jsonText));
+        ScheduledFuture[] holder = new ScheduledFuture[1];
+        holder[0] = scheduledExecutorService.schedule(() -> {
+            holder[0].cancel(true);
+            notifyWitchSave();
+        }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
+    }
+
+    public void playerVote(Session session, String votedPlayerId) {
+        playerVotings.put(getPlayerId(session), new PlayerVoting(votedPlayerId));
+    }
+    
+    private void notifySomeoneBeVoted() {
+        Collection<String> newlyDead = new LinkedHashSet<>();
+        
+        List<Map.Entry<String, Long>> top2 = playerVotings.values().stream()
+                .collect(Collectors.groupingBy(playerVoting -> playerVoting.playerId, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Comparator.comparingLong((Map.Entry<String, Long> entry) -> entry.getValue()).reversed())
+                .limit(2)
+                .collect(Collectors.toList());
+        if(top2.size() == 1 || (top2.size() == 2 && top2.get(0).getValue().compareTo(top2.get(1).getValue()) > 0)) {
+            newlyDead.add(top2.get(0).getKey());
+            this.dead.add(top2.get(0).getKey());
+        }
+        
+        Map<String, Object> notifyDead = ImmutableMap.of(
+                "code", "notifyDead",
+                "properties", newlyDead
+        );
+        String jsonText = JsonUtils.toString(notifyDead);
+        sessions.stream()
+                .forEach(s -> s.getAsyncRemote().sendText(jsonText));
+        
+        notifyWolvesKillVillagers();
     }
     
     private int turn() {
@@ -508,6 +556,13 @@ public class Room {
     private static class SeerForcasting {
         private final String playerId;
         public SeerForcasting(String playerId) {
+            this.playerId = playerId;
+        }
+    }
+
+    private static class PlayerVoting {
+        private final String playerId;
+        public PlayerVoting(String playerId) {
             this.playerId = playerId;
         }
     }
