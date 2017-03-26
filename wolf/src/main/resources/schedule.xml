@@ -4,9 +4,9 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:task="http://www.springframework.org/schema/task"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
-       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"  
        xsi:schemaLocation="
-            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans 
             http://www.springframework.org/schema/beans/spring-beans.xsd
             http://www.springframework.org/schema/context
             http://www.springframework.org/schema/context/spring-context.xsd
@@ -16,5 +16,9 @@
             http://www.springframework.org/schema/mvc/spring-mvc.xsd
             http://www.springframework.org/schema/rabbit
             http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
-
+    
+    <bean id="scheduledExecutorService" class="java.util.concurrent.Executors" factory-method="newScheduledThreadPool">
+        <constructor-arg value="#{T(java.lang.Runtime).getRuntime().availableProcessors()}"></constructor-arg>
+    </bean>
+    
 </beans>

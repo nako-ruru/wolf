@@ -29,7 +29,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +60,7 @@ public class Room {
     private static final long WITCH_SAVE_DURATION = TimeUnit.SECONDS.toMillis(15);
     private static final long HUNTER_KILL_DURATION = TimeUnit.SECONDS.toMillis(15);
     
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ScheduledExecutorService scheduledExecutorService = SpringContext.getBean(ScheduledExecutorService.class);
     
     public String roomId = UUID.randomUUID().toString();
     
