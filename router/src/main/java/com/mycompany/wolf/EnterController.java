@@ -20,7 +20,6 @@ public class EnterController {
     
     @RequestMapping(value = "/enter", method = RequestMethod.GET)
     public RouteResult enter() {
-
         return SpringContext.getBean(Router.class).route();
     }
     

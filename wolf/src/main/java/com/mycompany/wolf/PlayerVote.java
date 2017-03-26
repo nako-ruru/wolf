@@ -12,18 +12,18 @@ import javax.websocket.Session;
  *
  * @author Administrator
  */
-public class Prepare {
-    
-    private final Session session;
-    private final boolean flag;
+public class PlayerVote {
 
-    Prepare(Session session, boolean flag) {
+    private final Session session;
+    private final String playerId;
+
+    public PlayerVote(Session session, String playerId) {
         this.session = session;
-        this.flag = flag;
+        this.playerId = playerId;
     }
     
     public void invoke() {
-        SpringContext.getBean(Game.class).prepare(session, flag);
+        SpringContext.getBean(Game.class).playerVote(session, playerId);
     }
     
 }

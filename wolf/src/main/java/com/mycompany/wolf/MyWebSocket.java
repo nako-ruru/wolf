@@ -65,7 +65,7 @@ public class MyWebSocket {
                 new Exit(session).invoke();
                 break;
             case "prepare":
-                new Prepare(session).invoke();
+                new Prepare(session, "true".equals(String.valueOf(m.getProperties().get("flag")))).invoke();
                 break;
             case "competeRole":
                 new CompeteRole(session, m.getProperties().get("role")).invoke();
@@ -86,8 +86,10 @@ public class MyWebSocket {
                 new SeerForecast(session, m.getProperties().get("playerId")).invoke();
                 break;
             case "enableMicrophone":
+                new EnableMicrophone(session, true).invoke();
                 break;
             case "playerVote":
+                new PlayerVote(session, m.getProperties().get("playerId")).invoke();
                 break;
         }
     }

@@ -73,13 +73,13 @@ public class Game {
         room.addPlayer(session);
     }
     
-    public void prepare(Session session) {
+    public void prepare(Session session, boolean flag) {
         String playerId = (String) session.getUserProperties().get("playerId");
         rooms.values().stream()
                 .filter(r -> r.contains(playerId))
                 .findAny()
                 .ifPresent(room -> {
-                    room.prepare(playerId, true);
+                    room.prepare(playerId, flag);
                 });
     }
     

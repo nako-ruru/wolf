@@ -59,6 +59,7 @@ public class Room {
     private static final long COMPETE_ROLE_DURATION = TimeUnit.SECONDS.toMillis(15);
     private static final long WOLVIES_KILL_VILLAGERS_DURATION = TimeUnit.SECONDS.toMillis(15);
     private static final long WITCH_SAVE_DURATION = TimeUnit.SECONDS.toMillis(15);
+    private static final long HUNTER_KILL_DURATION = TimeUnit.SECONDS.toMillis(15);
     
     private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     
@@ -92,7 +93,7 @@ public class Room {
                     .collect(Collectors.toCollection(LinkedList::new ));
             Map<String, Object> m = ImmutableMap.of(
                     "code", "enterResp",
-                    "properties", roomInfo
+                    "properties", ImmutableMap.of("roomInfo", roomInfo)
             );
             String json = new Gson().toJson(m);
             sessions.stream().forEach(s -> {
@@ -157,7 +158,7 @@ public class Room {
             sessions.stream().forEach(s -> {
                 s.getAsyncRemote().sendText(json);
             });
-            if(sessions.stream().allMatch(s -> Boolean.TRUE.equals(isPrepared(s)))) {
+            if(sessions.size() == availableCount() && sessions.stream().allMatch(s -> Boolean.TRUE.equals(isPrepared(s)))) {
                 notifyCompeteRole();
             }
         }
@@ -192,7 +193,7 @@ public class Room {
     private void notifyCompeteRole() {
         Map<String, Object> m = ImmutableMap.of(
                 "code", "notifyCompeteRole",
-                "properties", availableRoles()
+                "properties", ImmutableMap.of("availableRoles", availableRoles())
         );
         String json = new Gson().toJson(m);
         sessions.stream().forEach(s -> {
@@ -286,18 +287,19 @@ public class Room {
         }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
     }
     
-    public void wolfVote(Session session, String playerId) {
-        if("wolf".equals(session.getUserProperties().get("role"))) {
-            wolfVotings.put(getPlayerId(session), new WolfVoting(playerId));
+    public void wolfVote(Session session, String votedPlayerId) {
+        final String playerId = getPlayerId(session);
+        if(WOLF.equals(session.getUserProperties().get("role")) && !dead.contains(playerId)) {
+            wolfVotings.put(playerId, new WolfVoting(votedPlayerId));
         }
     }
     
     private void notifyWitchSave() {
         ScheduledFuture[] holder = new ScheduledFuture[1];
         holder[0] = scheduledExecutorService.schedule(() -> {
-            notifyHunterKillIfDead();
             holder[0].cancel(true);
-        }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
+            notifyHunterKillIfDead();
+        }, WITCH_SAVE_DURATION, TimeUnit.MILLISECONDS);
         
         /*
          * 将被狼投票的角色加入到新死亡列表 
@@ -331,7 +333,7 @@ public class Room {
         
         Map<String, Object> notifyWolfVoted = ImmutableMap.of(
                 "code", "notifyWolfVoted",
-                "properties", theVoted
+                "properties", ImmutableMap.of("playerId", theVoted)
         );
         String jsonText = JsonUtils.toString(notifyWolfVoted);
         sessions.stream().forEach(s -> {
@@ -339,15 +341,17 @@ public class Room {
         });
     }
     
-    public void witchSave(Session session, String playerId) {
-        if(WITCH.equals(session.getUserProperties().get("role"))) {
-            witchSavings.put(getPlayerId(session), new WitchSaving(playerId));
+    public void witchSave(Session session, String savedPlayerId) {
+        final String playerId = getPlayerId(session);
+        if(WITCH.equals(session.getUserProperties().get("role")) && !dead.contains(playerId)) {
+            witchSavings.put(playerId, new WitchSaving(savedPlayerId));
         }
     }
     
-    public void witchPoison(Session session, String playerId) {
-        if(WITCH.equals(session.getUserProperties().get("role"))) {
-            witchPoisonings.put(getPlayerId(session), new WitchPoisoning(playerId));
+    public void witchPoison(Session session, String poisonedPlayerId) {
+        final String playerId = getPlayerId(session);
+        if(WITCH.equals(session.getUserProperties().get("role")) && !dead.contains(playerId)) {
+            witchPoisonings.put(playerId, new WitchPoisoning(poisonedPlayerId));
         }
     }
     
@@ -355,34 +359,66 @@ public class Room {
      * 通知猎人猎杀
      */
     private void notifyHunterKillIfDead() {
-        hunterKillings.clear();
-        
-        Map<String, Object> assignRoles = ImmutableMap.of(
-                "code", "notifyHunterKill"
-        );
-        String jsonText = JsonUtils.toString(assignRoles);
-        sessions.stream()
-                .forEach(s -> s.getAsyncRemote().sendText(jsonText));
-        ScheduledFuture[] holder = new ScheduledFuture[1];
-        holder[0] = scheduledExecutorService.schedule(() -> {
-            holder[0].cancel(true);
-            notifyDead();
-        }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
-    }
-    
-    public void hunterKills(Session session, String playerId) {
-        if(HUNTER.equals(session.getUserProperties().get("role"))) {
-            hunterKillings.put(getPlayerId(session), new HunterKilling(playerId));
+        if(contains(dead, HUNTER)) {
+            hunterKillings.clear();
+
+            Map<String, Object> assignRoles = ImmutableMap.of(
+                    "code", "notifyHunterKill"
+            );
+            String jsonText = JsonUtils.toString(assignRoles);
+            sessions.stream()
+                    .forEach(s -> s.getAsyncRemote().sendText(jsonText));
+            ScheduledFuture[] holder = new ScheduledFuture[1];
+            holder[0] = scheduledExecutorService.schedule(() -> {
+                holder[0].cancel(true);
+                notifyDayBreak();
+            }, HUNTER_KILL_DURATION, TimeUnit.MILLISECONDS);
+        } else {
+            notifyDayBreak();
         }
     }
     
-    public void seerForecasts(Session session, String playerId) {
-        if(SEER.equals(session.getUserProperties().get("role"))) {
-            seerForcastings.put(getPlayerId(session), new SeerForcasting(playerId));
+    private boolean contains(Collection<String> playerIds, String role) {
+        return playerIds.stream().anyMatch(pid -> {
+            Session session = sessions.stream()
+                    .filter(s -> Objects.equals(getPlayerId(s), pid))
+                    .findAny()
+                    .orElse(null);
+            if(session != null) {
+                return Objects.equals(session.getUserProperties().get("role"), role);
+            }
+            return false;
+        });
+    }
+    
+    public void hunterKills(Session session, String killedPlayerId) {
+        final String playerId = getPlayerId(session);
+        if(HUNTER.equals(session.getUserProperties().get("role")) && !dead.contains(playerId)) {
+            hunterKillings.put(playerId, new HunterKilling(killedPlayerId));
         }
     }
     
-    private void notifyDead() {
+    public void seerForecasts(Session session, String forecastedPlayerId) {
+        final String playerId = getPlayerId(session);
+        if(SEER.equals(session.getUserProperties().get("role")) &&
+           !dead.contains(playerId) &&
+           !seerForcastings.containsKey(playerId)   //不能重复检查
+        ) {
+            seerForcastings.put(playerId, new SeerForcasting(forecastedPlayerId));
+            Session forecastedSession = sessions.stream()
+                    .filter(s -> Objects.equals(getPlayerId(s), forecastedPlayerId))
+                    .findAny()
+                    .orElse(null);
+            Map<String, Object> forecastResp = ImmutableMap.of(
+                    "code", "seerForecastResp",
+                    "properties", ImmutableMap.of("playerId", forecastedPlayerId, "role", forecastedSession.getUserProperties().get("role"))
+            );
+            String forecastRespJson = JsonUtils.toString(forecastResp);
+            session.getAsyncRemote().sendText(forecastRespJson);
+        }
+    }
+    
+    private void notifyDayBreak() {
         hunterKillings.values().stream()
                 .map(hunterKilling -> hunterKilling.playerId)
                 .forEach(newlyDead::add);
@@ -396,23 +432,23 @@ public class Room {
         turnOffset = 0;
         
         Map<String, Object> notifyDead = ImmutableMap.of(
-                "code", "notifyDead",
+                "code", "notifyDayBreak",
                 "properties", ImmutableMap.of("dead", dead, "newlyDead", newlyDead)
         );
         String jsonText = JsonUtils.toString(notifyDead);
         sessions.stream()
                 .forEach(s -> s.getAsyncRemote().sendText(jsonText));
         
-        nextPlayer();
+        notifyNextTurn();
     }
     
     /**
      * 通知每一位玩家轮流讲话
      */
-    private void nextPlayer() {
+    private void notifyNextTurn() {
         Map<String, Object> nextPlayer = ImmutableMap.of(
-                "code", "nextPlayer",
-                "properties", turn()
+                "code", "notifyNextTurn",
+                "properties", ImmutableMap.of("playerId", getPlayerId(sessions.get(turn())))
         );
         String jsonText = JsonUtils.toString(nextPlayer);
         sessions.stream()
@@ -422,9 +458,9 @@ public class Room {
             holder[0].cancel(true);
             turnOffset++;
             if(turnOffset < sessions.size()) {
-                nextPlayer();
+                notifyNextTurn();
             } else {
-                notifySomeoneBeVoted();
+                notifyPlayersVote();
             }
         }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
     }
@@ -453,12 +489,15 @@ public class Room {
         ScheduledFuture[] holder = new ScheduledFuture[1];
         holder[0] = scheduledExecutorService.schedule(() -> {
             holder[0].cancel(true);
-            notifyWitchSave();
+            notifySomeoneBeVoted();
         }, WOLVIES_KILL_VILLAGERS_DURATION, TimeUnit.MILLISECONDS);
     }
 
     public void playerVote(Session session, String votedPlayerId) {
-        playerVotings.put(getPlayerId(session), new PlayerVoting(votedPlayerId));
+        final String playerId = getPlayerId(session);
+        if(!dead.contains(playerId)) {
+            playerVotings.put(playerId, new PlayerVoting(votedPlayerId));
+        }
     }
     
     private void notifySomeoneBeVoted() {
