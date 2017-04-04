@@ -1,3 +1,7 @@
 /.idea
 /router/target
 /wolf/target
+/wolf_client/gen/
+/wolf_android/gen/
+/wolf_android/bin/
+/wolf_client/.gitignore

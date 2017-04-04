@@ -89,7 +89,7 @@ public class Game {
                 .filter(r -> r.contains(playerId))
                 .findAny()
                 .ifPresent(room -> {
-                    room.prepare(playerId, true);
+                    room.competeRole(playerId, role);
                 });
     }
     

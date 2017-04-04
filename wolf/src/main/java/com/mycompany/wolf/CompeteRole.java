@@ -5,6 +5,7 @@
  */
 package com.mycompany.wolf;
 
+import com.mycompany.work.framework.spring.SpringContext;
 import javax.websocket.Session;
 
 /**
@@ -22,7 +23,7 @@ public class CompeteRole {
     }
     
     public void invoke() {
-        
+        SpringContext.getBean(Game.class).competeRole(session, competingRole);
     }
     
 }
